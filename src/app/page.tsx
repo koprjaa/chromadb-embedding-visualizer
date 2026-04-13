@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react"
 import { Canvas, useThree, useFrame } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import * as THREE from "three"
@@ -91,11 +91,11 @@ const CLUSTER_HEX = CLUSTER_PALETTE.map(c =>
 )
 
 // Instanced points with hover detection
-function InstancedPoints({ 
-  points, 
+const InstancedPoints = memo(function InstancedPoints({
+  points,
   onHover,
   selectedTopic
-}: { 
+}: {
   points: EmbeddingPoint[]
   onHover: (index: number | null, position: {x: number, y: number} | null) => void
   selectedTopic: number | null
@@ -103,11 +103,8 @@ function InstancedPoints({
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const { camera, raycaster, pointer, gl } = useThree()
   const lastHovered = useRef<number | null>(null)
-  
-  // Configure raycaster for small objects
-  useEffect(() => {
-    raycaster.params.Line = { threshold: 0.1 }
-  }, [raycaster])
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+  const projected = useMemo(() => new THREE.Vector3(), [])
   
   // Don't render if no points
   const pointCount = points.length || 1
@@ -135,8 +132,6 @@ function InstancedPoints({
     if (!meshRef.current || points.length === 0) return
     
     const mesh = meshRef.current
-    const dummy = new THREE.Object3D()
-    
     for (let i = 0; i < points.length; i++) {
       const p = points[i]
       dummy.position.set(p.x * 2, p.y * 2, p.z * 2)
@@ -145,7 +140,7 @@ function InstancedPoints({
     }
     
     mesh.instanceMatrix.needsUpdate = true
-  }, [points])
+  }, [points, dummy])
 
   // Update colors when selection changes
   useEffect(() => {
@@ -153,9 +148,7 @@ function InstancedPoints({
     const geometry = meshRef.current.geometry
     const colorAttr = geometry.getAttribute('color') as THREE.BufferAttribute | null
     if (colorAttr && colorAttr.array.length === colorArray.length) {
-      for (let i = 0; i < colorArray.length; i++) {
-        (colorAttr.array as Float32Array)[i] = colorArray[i]
-      }
+      ;(colorAttr.array as Float32Array).set(colorArray)
       colorAttr.needsUpdate = true
     }
   }, [colorArray, points.length, selectedTopic])
@@ -174,10 +167,10 @@ function InstancedPoints({
         // Get screen position
         const point = points[idx]
         if (point) {
-          const vec = new THREE.Vector3(point.x * 2, point.y * 2, point.z * 2)
-          vec.project(camera)
-          const x = (vec.x * 0.5 + 0.5) * gl.domElement.clientWidth
-          const y = (-vec.y * 0.5 + 0.5) * gl.domElement.clientHeight
+          projected.set(point.x * 2, point.y * 2, point.z * 2)
+          projected.project(camera)
+          const x = (projected.x * 0.5 + 0.5) * gl.domElement.clientWidth
+          const y = (-projected.y * 0.5 + 0.5) * gl.domElement.clientHeight
           onHover(idx, { x, y })
         }
       }
@@ -202,14 +195,14 @@ function InstancedPoints({
       <meshStandardMaterial vertexColors transparent opacity={0.85} roughness={0.4} metalness={0.1} />
     </instancedMesh>
   )
-}
+})
 
-function Scene({ 
+const Scene = memo(function Scene({
   points,
   onHover,
   darkMode,
   selectedTopic
-}: { 
+}: {
   points: EmbeddingPoint[]
   onHover: (index: number | null, position: {x: number, y: number} | null) => void
   darkMode: boolean
@@ -232,7 +225,31 @@ function Scene({
       />
     </>
   )
+})
+
+interface VisualizationCanvasProps {
+  points: EmbeddingPoint[]
+  onHover: (index: number | null, position: {x: number, y: number} | null) => void
+  darkMode: boolean
+  selectedTopic: number | null
 }
+
+const VisualizationCanvas = memo(function VisualizationCanvas({
+  points,
+  onHover,
+  darkMode,
+  selectedTopic,
+}: VisualizationCanvasProps) {
+  return (
+    <Canvas
+      camera={{ position: [5, 4, 5], fov: 50, near: 0.01, far: 1000 }}
+      raycaster={{ params: { Line: { threshold: 0.1 } } }}
+      style={{ background: darkMode ? "#09090b" : "#f1f5f9" }}
+    >
+      <Scene points={points} onHover={onHover} darkMode={darkMode} selectedTopic={selectedTopic} />
+    </Canvas>
+  )
+})
 
 export default function EmbeddingsVisualizer() {
   const [points, setPoints] = useState<EmbeddingPoint[]>([])
@@ -246,28 +263,7 @@ export default function EmbeddingsVisualizer() {
   const [tooltipPos, setTooltipPos] = useState<{x: number, y: number} | null>(null)
   const [legendExpanded, setLegendExpanded] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null)
-  const [windowSize, setWindowSize] = useState({ width: 1920, height: 1080 })
-
-  // Update window size on client
-  useEffect(() => {
-    const updateSize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight })
-    updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
-  }, [])
-
-  useEffect(() => {
-    loadCollectionInfo()
-  }, [])
-
-  // Auto-load data when collection info is available
-  useEffect(() => {
-    if (collectionInfo && points.length === 0 && !isLoading) {
-      loadData()
-    }
-  }, [collectionInfo])
-
-  const loadCollectionInfo = async () => {
+  const loadCollectionInfo = useCallback(async () => {
     try {
       const response = await fetch(`${getApiBase()}/api/info`)
       if (!response.ok) throw new Error("Failed to load collection info")
@@ -277,9 +273,9 @@ export default function EmbeddingsVisualizer() {
     } catch {
       setError("Nelze se připojit k backendu.")
     }
-  }
+  }, [])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!collectionInfo) return
     
     setIsLoading(true)
@@ -316,18 +312,33 @@ export default function EmbeddingsVisualizer() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [collectionInfo])
+
+  useEffect(() => {
+    loadCollectionInfo()
+  }, [loadCollectionInfo])
+
+  // Auto-load data when collection info is available
+  useEffect(() => {
+    if (collectionInfo && points.length === 0 && !isLoading) {
+      loadData()
+    }
+  }, [collectionInfo, points.length, isLoading, loadData])
 
   const handleHover = useCallback((index: number | null, position: {x: number, y: number} | null) => {
     setHoveredIndex(index)
     setTooltipPos(position)
   }, [])
 
-  const themeClasses = darkMode 
-    ? "bg-zinc-950 text-white" 
-    : "bg-slate-100 text-slate-900"
+  const themeClasses = useMemo(
+    () => (darkMode ? "bg-zinc-950 text-white" : "bg-slate-100 text-slate-900"),
+    [darkMode]
+  )
 
-  const hoveredPoint = hoveredIndex !== null ? points[hoveredIndex] : null
+  const hoveredPoint = useMemo(
+    () => (hoveredIndex !== null ? points[hoveredIndex] : null),
+    [hoveredIndex, points]
+  )
 
   // Main visualization (always shown)
   return (
@@ -362,12 +373,12 @@ export default function EmbeddingsVisualizer() {
             </div>
           )}
 
-        <Canvas 
-          camera={{ position: [5, 4, 5], fov: 50, near: 0.01, far: 1000 }}
-          style={{ background: darkMode ? '#09090b' : '#f1f5f9' }}
-        >
-          <Scene points={points} onHover={handleHover} darkMode={darkMode} selectedTopic={selectedTopic} />
-        </Canvas>
+        <VisualizationCanvas
+          points={points}
+          onHover={handleHover}
+          darkMode={darkMode}
+          selectedTopic={selectedTopic}
+        />
         
         {/* Info card - top left */}
         <div className={`absolute top-4 left-4 z-30 ${darkMode ? 'bg-zinc-900/90' : 'bg-white/95 border border-slate-200'} backdrop-blur rounded-lg shadow-lg p-3 text-xs`}>
@@ -479,8 +490,8 @@ export default function EmbeddingsVisualizer() {
               darkMode ? 'bg-zinc-900/95 text-white' : 'bg-white/98 text-slate-900 shadow-2xl'
             }`}
             style={{
-              left: Math.min(tooltipPos.x + 15, windowSize.width - 380),
-              top: Math.min(tooltipPos.y + 15, windowSize.height - 280),
+              left: `min(${tooltipPos.x + 15}px, calc(100vw - 380px))`,
+              top: `min(${tooltipPos.y + 15}px, calc(100vh - 280px))`,
               borderColor: CLUSTER_HEX[Math.abs(hoveredPoint.cluster ?? 0) % CLUSTER_HEX.length],
             }}
           >
