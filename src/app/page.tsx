@@ -243,7 +243,7 @@ const VisualizationCanvas = memo(function VisualizationCanvas({
   return (
     <Canvas
       camera={{ position: [5, 4, 5], fov: 50, near: 0.01, far: 1000 }}
-      raycaster={{ params: { Line: { threshold: 0.1 } } }}
+      raycaster={{ params: { Line: { threshold: 0.1 } } as THREE.RaycasterParameters }}
       style={{ background: darkMode ? "#09090b" : "#f1f5f9" }}
     >
       <Scene points={points} onHover={onHover} darkMode={darkMode} selectedTopic={selectedTopic} />
