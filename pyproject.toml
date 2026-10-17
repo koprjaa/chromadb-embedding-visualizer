@@ -1,7 +1,7 @@
 [project]
 name = "chromadb-embedding-visualizer"
 version = "1.0.0"
-description = "Render a ChromaDB vector store as a 3D point cloud. UMAP and HDBSCAN in Python, Three.js in the browser."
+description = "Shows a ChromaDB vector store as a 3D point cloud."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"

@@ -38,6 +38,6 @@
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   },
-  "description": "Render a ChromaDB vector store as a 3D point cloud.",
+  "description": "Shows a ChromaDB vector store as a 3D point cloud.",
   "license": "MIT"
 }
