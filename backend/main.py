@@ -41,9 +41,7 @@ app = FastAPI(
 # CORS for Next.js frontend.
 # Restrict to known origin(s); override via CORS_ORIGINS (comma-separated).
 _cors_origins = [
-    o.strip()
-    for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-    if o.strip()
+    o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -128,29 +126,26 @@ def get_info() -> CollectionInfo:
     topics = []
     for tid_str, info in topics_raw.items():
         tid = int(tid_str)
-        topics.append(TopicInfo(
-            id=tid,
-            name=info.get("name", f"Topic {tid}"),
-            keywords=info.get("keywords", []),
-            count=topic_counts.get(tid, 0)
-        ))
+        topics.append(
+            TopicInfo(
+                id=tid,
+                name=info.get("name", f"Topic {tid}"),
+                keywords=info.get("keywords", []),
+                count=topic_counts.get(tid, 0),
+            )
+        )
 
     # Sort by count descending, but put -1 (outliers) last
     topics.sort(key=lambda t: (t.id == -1, -t.count))
 
     return CollectionInfo(
-        name="langchain",
-        count=len(points),
-        dimensions=dimensions,
-        model=model,
-        topics=topics
+        name="langchain", count=len(points), dimensions=dimensions, model=model, topics=topics
     )
 
 
 @app.get("/api/embeddings")
 async def get_embeddings(
-    limit: int = Query(default=1000, le=500000),
-    offset: int = Query(default=0, ge=0)
+    limit: int = Query(default=1000, le=500000), offset: int = Query(default=0, ge=0)
 ) -> list[EmbeddingPoint]:
     """
     Get pre-computed embeddings with 3D coordinates.
@@ -160,7 +155,7 @@ async def get_embeddings(
     points = cache.get("points", [])
 
     # Slice based on limit and offset
-    selected = points[offset:offset + limit]
+    selected = points[offset : offset + limit]
 
     return [
         EmbeddingPoint(
@@ -171,10 +166,7 @@ async def get_embeddings(
             z=p["z"],
             cluster=p.get("cluster", 0),
             topic_name=p.get("topic_name", ""),
-            metadata={
-                "title": p.get("title", ""),
-                "category": p.get("category", "")
-            }
+            metadata={"title": p.get("title", ""), "category": p.get("category", "")},
         )
         for p in selected
     ]
@@ -182,6 +174,7 @@ async def get_embeddings(
 
 if __name__ == "__main__":
     import uvicorn
+
     # Pre-load cache
     load_cache()
     print(f"Cache loaded with {len(_cache.get('points', []))} points")

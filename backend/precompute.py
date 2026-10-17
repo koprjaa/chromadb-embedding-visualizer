@@ -40,8 +40,10 @@ def log(msg):
     """Print with immediate flush."""
     print(msg, flush=True)
 
+
 try:
     from umap import UMAP
+
     HAS_UMAP = True
 except ImportError:
     HAS_UMAP = False
@@ -49,6 +51,7 @@ except ImportError:
 
 try:
     import hdbscan
+
     HAS_HDBSCAN = True
 except ImportError:
     HAS_HDBSCAN = False
@@ -57,6 +60,7 @@ except ImportError:
 try:
     from bertopic import BERTopic
     from sklearn.feature_extraction.text import CountVectorizer
+
     HAS_BERTOPIC = True
 except ImportError:
     HAS_BERTOPIC = False
@@ -72,7 +76,8 @@ def get_documents(limit=500000):
     conn = sqlite3.connect(str(SQLITE_PATH))
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT e.id, e.embedding_id,
                MAX(CASE WHEN em.key = 'chroma:document' THEN em.string_value END) as document,
                MAX(CASE WHEN em.key = 'title' THEN em.string_value END) as title,
@@ -82,7 +87,9 @@ def get_documents(limit=500000):
         GROUP BY e.id, e.embedding_id
         ORDER BY e.id
         LIMIT ?
-    """, (limit,))
+    """,
+        (limit,),
+    )
 
     results = [
         {
@@ -127,11 +134,8 @@ def read_all_embeddings(dimensions=1024):
     data_file = folder / "data_level0.bin"
     print(f"Reading embeddings from {data_file}...")
 
-    num_vectors, entry_size, vector_offset = parse_hnsw_header(
-        (folder / "header.bin").read_bytes()
-    )
-    print(f"   Header: {num_vectors} vectors, entry_size={entry_size}, "
-          f"vector_offset={vector_offset}")
+    num_vectors, entry_size, vector_offset = parse_hnsw_header((folder / "header.bin").read_bytes())
+    print(f"   Header: {num_vectors} vectors, entry_size={entry_size}, vector_offset={vector_offset}")
 
     data = data_file.read_bytes()
     print(f"   File contains {len(data) // entry_size} vector slots")
@@ -240,13 +244,13 @@ def main():
         from sklearn.feature_extraction.text import TfidfVectorizer
 
         tfidf_vectorizer = TfidfVectorizer(
-            strip_accents=None,     # Preserve Czech diacritics
-            token_pattern=r'(?u)\b[^\W\d_]{2,}\b',  # Unicode letters only
+            strip_accents=None,  # Preserve Czech diacritics
+            token_pattern=r"(?u)\b[^\W\d_]{2,}\b",  # Unicode letters only
             lowercase=True,
             min_df=5,
             max_df=0.5,
             ngram_range=(1, 2),
-            max_features=5000  # Limit vocabulary for speed
+            max_features=5000,  # Limit vocabulary for speed
         )
 
         log("   Creating TF-IDF matrix...")
@@ -266,9 +270,9 @@ def main():
             spread=1.0,
             n_jobs=-1,  # Use all CPU cores
             low_memory=True,
-            metric='cosine',
+            metric="cosine",
             random_state=42,
-            verbose=True
+            verbose=True,
         )
         coords_3d = umap_3d.fit_transform(tfidf_dense)
 
@@ -282,60 +286,246 @@ def main():
         # Czech stopwords - common generic words to exclude from topic names
         czech_stopwords = [
             # Pronouns & articles
-            'jsem', 'jsi', 'jsou', 'byl', 'byla', 'bylo', 'byli', 'být', 'bude', 'budou',
-            'mám', 'máme', 'mají', 'může', 'mohou', 'musí', 'chce', 'chtějí',
+            "jsem",
+            "jsi",
+            "jsou",
+            "byl",
+            "byla",
+            "bylo",
+            "byli",
+            "být",
+            "bude",
+            "budou",
+            "mám",
+            "máme",
+            "mají",
+            "může",
+            "mohou",
+            "musí",
+            "chce",
+            "chtějí",
             # Common verbs
-            'mít', 'dát', 'jít', 'říci', 'vidět', 'stát', 'dostat', 'chtít', 'vědět',
-            'dělat', 'udělat', 'použít', 'ukázat', 'ukazuje', 'možné', 'ideální',
+            "mít",
+            "dát",
+            "jít",
+            "říci",
+            "vidět",
+            "stát",
+            "dostat",
+            "chtít",
+            "vědět",
+            "dělat",
+            "udělat",
+            "použít",
+            "ukázat",
+            "ukazuje",
+            "možné",
+            "ideální",
             # Prepositions & conjunctions
-            'přes', 'podle', 'nebo', 'ale', 'tak', 'jen', 'již', 'ještě', 'také',
-            'proto', 'tedy', 'když', 'kde', 'jak', 'proč', 'který', 'která', 'které',
+            "přes",
+            "podle",
+            "nebo",
+            "ale",
+            "tak",
+            "jen",
+            "již",
+            "ještě",
+            "také",
+            "proto",
+            "tedy",
+            "když",
+            "kde",
+            "jak",
+            "proč",
+            "který",
+            "která",
+            "které",
             # Numbers & quantities
-            'jeden', 'dva', 'tři', 'první', 'druhý', 'třetí', 'celý', 'celém', 'polovina',
-            'více', 'méně', 'hodně', 'málo', 'korun', 'procent', 'tisíc', 'milion',
+            "jeden",
+            "dva",
+            "tři",
+            "první",
+            "druhý",
+            "třetí",
+            "celý",
+            "celém",
+            "polovina",
+            "více",
+            "méně",
+            "hodně",
+            "málo",
+            "korun",
+            "procent",
+            "tisíc",
+            "milion",
             # Generic nouns
-            'rok', 'den', 'čas', 'místo', 'způsob', 'část', 'strana', 'věc', 'člověk',
-            'lidé', 'práce', 'svět', 'život', 'firma', 'společnost', 'funkce',
+            "rok",
+            "den",
+            "čas",
+            "místo",
+            "způsob",
+            "část",
+            "strana",
+            "věc",
+            "člověk",
+            "lidé",
+            "práce",
+            "svět",
+            "život",
+            "firma",
+            "společnost",
+            "funkce",
             # Web/tech generic
-            'www', 'http', 'https', 'com', 'org', 'cz', 'html',
-            'the', 'and', 'for', 'you', 'are', 'this', 'that', 'our', 'your', 'their',
-            'with', 'have', 'from', 'will', 'can', 'all', 'new', 'more', 'not', 'was',
+            "www",
+            "http",
+            "https",
+            "com",
+            "org",
+            "cz",
+            "html",
+            "the",
+            "and",
+            "for",
+            "you",
+            "are",
+            "this",
+            "that",
+            "our",
+            "your",
+            "their",
+            "with",
+            "have",
+            "from",
+            "will",
+            "can",
+            "all",
+            "new",
+            "more",
+            "not",
+            "was",
             # Other common Czech
-            'právě', 'zatím', 'nyní', 'dnes', 'včera', 'zítra', 'letos', 'příští',
-            'vlastně', 'nejen', 'totiž', 'ovšem', 'pouze', 'hlavně', 'třeba', 'bohužel',
-            'samozřejmě', 'skutečně', 'dokonce', 'nakonec', 'opravdu', 'rozhodně',
-            'prostě', 'zkrátka', 'nicméně', 'přitom', 'dokud', 'jakmile', 'pokud',
-            'pro', 'nad', 'pod', 'před', 'mezi', 'vedle', 'kolem', 'během', 'pomocí',
-            'světě', 'světa', 'věku', 'době', 'rámci', 'případě', 'oblasti', 'základě',
+            "právě",
+            "zatím",
+            "nyní",
+            "dnes",
+            "včera",
+            "zítra",
+            "letos",
+            "příští",
+            "vlastně",
+            "nejen",
+            "totiž",
+            "ovšem",
+            "pouze",
+            "hlavně",
+            "třeba",
+            "bohužel",
+            "samozřejmě",
+            "skutečně",
+            "dokonce",
+            "nakonec",
+            "opravdu",
+            "rozhodně",
+            "prostě",
+            "zkrátka",
+            "nicméně",
+            "přitom",
+            "dokud",
+            "jakmile",
+            "pokud",
+            "pro",
+            "nad",
+            "pod",
+            "před",
+            "mezi",
+            "vedle",
+            "kolem",
+            "během",
+            "pomocí",
+            "světě",
+            "světa",
+            "věku",
+            "době",
+            "rámci",
+            "případě",
+            "oblasti",
+            "základě",
             # More generic words found in topics
-            'informací', 'informace', 'company', 'rozdíl', 'aby', 'není', 'jsme', 'než',
-            'cílem', 'cíle', 'výši', 'styl', 'mladí', 'mladý', 'republika',
-            'nový', 'nová', 'nové', 'velký', 'velká', 'malý', 'malá', 'dobrý', 'dobrá',
-            'každý', 'každá', 'další', 'jiný', 'jiná', 'stejný', 'stejná', 'různý', 'různá',
+            "informací",
+            "informace",
+            "company",
+            "rozdíl",
+            "aby",
+            "není",
+            "jsme",
+            "než",
+            "cílem",
+            "cíle",
+            "výši",
+            "styl",
+            "mladí",
+            "mladý",
+            "republika",
+            "nový",
+            "nová",
+            "nové",
+            "velký",
+            "velká",
+            "malý",
+            "malá",
+            "dobrý",
+            "dobrá",
+            "každý",
+            "každá",
+            "další",
+            "jiný",
+            "jiná",
+            "stejný",
+            "stejná",
+            "různý",
+            "různá",
             # Even more generic
-            'kontakt', 'spolu', 'roce', 'roku', 'let',
-            'bez', 'počet', 'chtěli', 'chtěl', 'naším', 'naše', 'náš', 'meziroční',
-            'dětí', 'petra', 'petr', 'chtěla', 'mohli', 'měli', 'říká', 'uvádí',
+            "kontakt",
+            "spolu",
+            "roce",
+            "roku",
+            "let",
+            "bez",
+            "počet",
+            "chtěli",
+            "chtěl",
+            "naším",
+            "naše",
+            "náš",
+            "meziroční",
+            "dětí",
+            "petra",
+            "petr",
+            "chtěla",
+            "mohli",
+            "měli",
+            "říká",
+            "uvádí",
         ]
 
         # Use BERTopic with our TF-IDF vectors
         vectorizer = CountVectorizer(
             strip_accents=None,
-            token_pattern=r'(?u)\b[^\W\d_]{3,}\b',  # Min 3 chars
+            token_pattern=r"(?u)\b[^\W\d_]{3,}\b",  # Min 3 chars
             lowercase=True,
             min_df=2,
             max_df=1.0,
             ngram_range=(1, 1),
-            stop_words=czech_stopwords  # Filter generic words
+            stop_words=czech_stopwords,  # Filter generic words
         )
 
         # HDBSCAN - moderate settings for ~20-30 topics
         hdbscan_for_bertopic = hdbscan.HDBSCAN(
-            min_cluster_size=80,    # ~80 docs per cluster minimum
+            min_cluster_size=80,  # ~80 docs per cluster minimum
             min_samples=5,
             cluster_selection_epsilon=0.0,
-            cluster_selection_method='eom',
-            prediction_data=True
+            cluster_selection_method="eom",
+            prediction_data=True,
         )
 
         # UMAP for BERTopic
@@ -343,10 +533,10 @@ def main():
             n_components=5,
             n_neighbors=15,
             min_dist=0.0,
-            metric='cosine',
+            metric="cosine",
             n_jobs=-1,
             low_memory=True,
-            random_state=42
+            random_state=42,
         )
 
         topic_model = BERTopic(
@@ -357,7 +547,7 @@ def main():
             vectorizer_model=vectorizer,
             top_n_words=5,
             calculate_probabilities=False,
-            verbose=True
+            verbose=True,
         )
 
         # Fit with TF-IDF dense vectors
@@ -392,10 +582,7 @@ def main():
     elif HAS_HDBSCAN:
         log("\n6. Computing HDBSCAN clusters for coloring (no BERTopic)...")
         clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=100,
-            min_samples=5,
-            cluster_selection_epsilon=0.1,
-            cluster_selection_method='eom'
+            min_cluster_size=100, min_samples=5, cluster_selection_epsilon=0.1, cluster_selection_method="eom"
         )
         cluster_labels = clusterer.fit_predict(coords_3d)
         n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
@@ -409,24 +596,26 @@ def main():
         "model": "BAAI/bge-m3",
         "method": "TF-IDF + UMAP + BERTopic" if HAS_BERTOPIC else ("UMAP" if HAS_UMAP else "PCA"),
         "topics": topic_info,  # Topic ID -> {name, keywords}
-        "points": []
+        "points": [],
     }
 
     for i in tqdm(range(actual_count), desc="   Building cache", unit="doc"):
         doc = docs[i]
         topic_id = int(cluster_labels[i])
         topic_name = topic_info.get(topic_id, {}).get("name", f"Topic {topic_id}")
-        cache["points"].append({
-            "id": doc["id"],
-            "text": doc["text"],
-            "title": doc["title"],
-            "category": doc.get("category", ""),
-            "cluster": topic_id,
-            "topic_name": topic_name,
-            "x": float(coords_3d[i, 0]),
-            "y": float(coords_3d[i, 1]),
-            "z": float(coords_3d[i, 2])
-        })
+        cache["points"].append(
+            {
+                "id": doc["id"],
+                "text": doc["text"],
+                "title": doc["title"],
+                "category": doc.get("category", ""),
+                "cluster": topic_id,
+                "topic_name": topic_name,
+                "x": float(coords_3d[i, 0]),
+                "y": float(coords_3d[i, 1]),
+                "z": float(coords_3d[i, 2]),
+            }
+        )
 
     # Save to file
     print(f"\n10. Saving cache to {CACHE_FILE}...")

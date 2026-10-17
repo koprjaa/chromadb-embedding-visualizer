@@ -57,7 +57,7 @@ def make_data(vectors, entry_size=None, vector_offset=VECTOR_OFFSET):
     buf = bytearray(entry_size * len(vectors))
     for position, vector in enumerate(vectors):
         start = position * entry_size + vector_offset
-        buf[start:start + span] = np.asarray(vector, dtype=np.float32).tobytes()
+        buf[start : start + span] = np.asarray(vector, dtype=np.float32).tobytes()
     return bytes(buf), entry_size
 
 

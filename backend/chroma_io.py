@@ -39,6 +39,7 @@ FLOAT32_BYTES = 4
 class ChromaIndexError(ValueError):
     """The HNSW index on disk is not shaped the way the reader expects."""
 
+
 # Radius the point cloud is scaled to, so the camera framing does not depend on
 # how spread out a particular collection happens to be.
 SCENE_RADIUS = 3.0
@@ -81,9 +82,9 @@ def parse_hnsw_header(header: bytes) -> tuple[int, int, int]:
     if len(header) < HEADER_VECTOR_OFFSET + 4:
         raise ChromaIndexError(f"header.bin is {len(header)} bytes, too short to read")
     return (
-        struct.unpack("<I", header[HEADER_NUM_VECTORS:HEADER_NUM_VECTORS + 4])[0],
-        struct.unpack("<I", header[HEADER_ENTRY_SIZE:HEADER_ENTRY_SIZE + 4])[0],
-        struct.unpack("<I", header[HEADER_VECTOR_OFFSET:HEADER_VECTOR_OFFSET + 4])[0],
+        struct.unpack("<I", header[HEADER_NUM_VECTORS : HEADER_NUM_VECTORS + 4])[0],
+        struct.unpack("<I", header[HEADER_ENTRY_SIZE : HEADER_ENTRY_SIZE + 4])[0],
+        struct.unpack("<I", header[HEADER_VECTOR_OFFSET : HEADER_VECTOR_OFFSET + 4])[0],
     )
 
 
@@ -105,7 +106,7 @@ def extract_vectors(
     for label in range(1, num_vectors + 1):
         start = (label - 1) * entry_size + vector_offset
         if start + span <= len(data):
-            vectors[label] = np.frombuffer(data[start:start + span], dtype=np.float32).copy()
+            vectors[label] = np.frombuffer(data[start : start + span], dtype=np.float32).copy()
     return vectors
 
 
