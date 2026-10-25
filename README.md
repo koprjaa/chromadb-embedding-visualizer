@@ -3,7 +3,7 @@
 Shows a ChromaDB vector store as a 3D point cloud.
 
 [![ci](https://github.com/koprjaa/chromadb-embedding-visualizer/actions/workflows/ci.yml/badge.svg)](https://github.com/koprjaa/chromadb-embedding-visualizer/actions/workflows/ci.yml)
-![license](https://img.shields.io/badge/license-MIT-A31F34?style=flat-square)
+![license](https://img.shields.io/badge/license-AGPL--3.0-A31F34?style=flat-square)
 
 https://github.com/user-attachments/assets/65218844-a127-4740-ab35-1d95218e9b30
 
@@ -40,4 +40,4 @@ npm run dev             # http://localhost:3000
 
 ## License
 
-[MIT](LICENSE)
+[AGPL-3.0-or-later](LICENSE)

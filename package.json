@@ -39,5 +39,5 @@
     "typescript": "^5"
   },
   "description": "Shows a ChromaDB vector store as a 3D point cloud.",
-  "license": "MIT"
+  "license": "AGPL-3.0-or-later"
 }

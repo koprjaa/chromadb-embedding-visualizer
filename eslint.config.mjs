@@ -9,7 +9,7 @@
  * Jan Alexandr Kopřiva
  * jan.alexandr.kopriva@gmail.com
  *
- * License: MIT
+ * License: AGPL-3.0-or-later
  */
 
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals"

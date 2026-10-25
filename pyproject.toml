@@ -3,13 +3,13 @@ name = "chromadb-embedding-visualizer"
 version = "1.0.0"
 description = "Shows a ChromaDB vector store as a 3D point cloud."
 readme = "README.md"
-license = "MIT"
+license = "AGPL-3.0-or-later"
 requires-python = ">=3.11"
 authors = [{ name = "Jan Alexandr Kopřiva", email = "jan.alexandr.kopriva@gmail.com" }]
 keywords = ["chromadb", "embeddings", "umap", "hdbscan", "visualization", "threejs"]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU AGPL-3.0-or-later",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

@@ -9,7 +9,7 @@
 # Jan Alexandr Kopřiva
 # jan.alexandr.kopriva@gmail.com
 #
-# License: MIT
+# License: AGPL-3.0-or-later
 #
 
 """Tests for reading a ChromaDB folder and its HNSW index.
